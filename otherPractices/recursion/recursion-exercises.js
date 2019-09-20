@@ -24,7 +24,6 @@ function range(firstNum, lastNum) {
         list.push(lastNum - 1);
         return list
     }
-
 }
 
 //function to calculate the exponent of a number
@@ -67,6 +66,7 @@ function evenOrOdd (number){
 
 //create a sort program using recursion
 function sort(array){
+    
     length = array.length - 1
     //just in case...
     if (array.length <= 1) {
