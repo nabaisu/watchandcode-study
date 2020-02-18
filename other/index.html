@@ -4,16 +4,17 @@
 <head>
   <title>Gmail API Quickstart</title>
   <meta charset="utf-8" />
-  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
-<style>
-  iframe {
-  width: 100vw;
-  border: 0;
-  min-height: 80%;
-  height: 100vh;
-  display: flex;
-}
-</style>
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css"
+    integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+  <style>
+    iframe {
+      width: 100vw;
+      border: 0;
+      min-height: 80%;
+      height: 100vh;
+      display: flex;
+    }
+  </style>
 </head>
 
 <body>
@@ -25,11 +26,13 @@
 
   <pre id="content" style="white-space: pre-wrap;"></pre>
   <button class="btn btn-success" onclick="next()">Next</button>
-  <button class="btn btn-primary" onclick="markMessageasRead()">Mark as Read</button>
+  <button class="btn btn-primary" onclick="markThreadasRead()">Mark as Read</button>
   <iframe id="message-body"></iframe>
 
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
-  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"
+    integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa"
+    crossorigin="anonymous"></script>
 
   <script type="text/javascript">
     // Client ID and API key from the Developer Console
@@ -47,9 +50,11 @@
     var signoutButton = document.getElementById('signout_button');
     var allMessages = JSON.parse(localStorage.getItem('messages'));
     var currentIndex = 0;
+    const userConstId = 'me';
     /**
      *  On load, called to load the auth2 library and API client library.
      */
+    // Google Function
     function handleClientLoad() {
       gapi.load('client:auth2', initClient);
     }
@@ -58,6 +63,7 @@
      *  Initializes the API client library and sets up sign-in state
      *  listeners.
      */
+    // Google Function
     function initClient() {
       gapi.client.init({
         apiKey: API_KEY,
@@ -81,12 +87,13 @@
      *  Called when the signed in status changes, to update the UI
      *  appropriately. After a sign-in, the API is called.
      */
+    // Google Function
     function updateSigninStatus(isSignedIn) {
       if (isSignedIn) {
         authorizeButton.style.display = 'none';
         signoutButton.style.display = 'block';
         //listLabels();
-        listMessages('me', printOnDeck);
+        listMessages( printOnDeck);
       } else {
         authorizeButton.style.display = 'block';
         signoutButton.style.display = 'none';
@@ -96,6 +103,7 @@
     /**
      *  Sign in the user upon button click.
      */
+    // Google Function
     function handleAuthClick(event) {
       gapi.auth2.getAuthInstance().signIn();
     }
@@ -103,6 +111,7 @@
     /**
      *  Sign out the user upon button click.
      */
+    // Google Function
     function handleSignoutClick(event) {
       gapi.auth2.getAuthInstance().signOut();
     }
@@ -119,13 +128,10 @@
       pre.appendChild(textContent);
     }
 
-    /**
-     * Print all Labels in the authorized user's inbox. If no labels
-     * are found an appropriate message is printed.
-     */
+// Google Function
     function listLabels() {
       gapi.client.gmail.users.labels.list({
-        'userId': 'me'
+        'userId': userConstId
       }).then(function (response) {
         var labels = response.result.labels;
         appendPre('Labels:');
@@ -141,38 +147,31 @@
       });
     };
 
-    function storeMessages(messages){
+    function storeMessages(messages) {
       if (messages) {
-        localStorage.setItem('messages',JSON.stringify(messages));
-      } 
+        localStorage.setItem('messages', JSON.stringify(messages));
+      }
       allMessages = JSON.parse(localStorage.getItem('messages'));
     }
 
-    function next(){
+    function next() {
       if (currentIndex >= allMessages.length && allMessages) {
         alert('acabaram os emails, de novo =)');
         currentIndex = 0;
       }
       currentIndex += 1;
-      getMessage('me', allMessages[currentIndex].id, displayMessage);
+      getMessage(allMessages[currentIndex].id, displayMessage);
     }
 
-    /**
-* Retrieve Messages in user's mailbox matching query.
-*
-* @param  {String} userId User's email address. The special value 'me'
-* can be used to indicate the authenticated user.
-* @param  {String} query String used to filter the Messages listed.
-* @param  {Function} callback Function to call when the request is complete.
-*/
-    function listMessages(userId, callback) {
+// Google Function
+    function listMessages( callback) {
       var getPageOfMessages = function (request, result) {
         request.execute(function (resp) {
           result = result.concat(resp.messages);
           var nextPageToken = resp.nextPageToken;
           if (nextPageToken) {
             request = gapi.client.gmail.users.messages.list({
-              'userId': userId,
+              'userId': userConstId,
               'pageToken': nextPageToken,
               //'q': query
             });
@@ -183,12 +182,12 @@
         });
       };
       var initialRequest = gapi.client.gmail.users.messages.list({
-        'userId': userId,
+        'userId': userConstId,
         'labelIds': ['UNREAD']
       });
       getPageOfMessages(initialRequest, []);
     }
-    var printOnDeck = function (response) {
+    function printOnDeck(response) {
       var messages = response;
       appendPre('Messages:');
 
@@ -204,103 +203,94 @@
       storeMessages(messages);
     }
 
-    /**
-* Get Message with given ID.
-*
-* @param  {String} userId User's email address. The special value 'me'
-* can be used to indicate the authenticated user.
-* @param  {String} messageId ID of Message to get.
-* @param  {Function} callback Function to call when the request is complete.
-*/
-    function getMessage(userId, messageId, callback) {
+    // Google Function
+    function getMessage(messageId, callback) {
       var request = gapi.client.gmail.users.messages.get({
-        'userId': userId,
+        'userId': userConstId,
         'id': messageId
       });
       request.execute(callback);
     }
-    
-    function displayMessage(message){
+
+    function displayMessage(message) {
       if (message) {
-      appendPre('Email:');
-      appendPre(getHeader(message.payload.headers, 'From'));
-      appendPre(getHeader(message.payload.headers, 'Subject'));
-      appendPre(getHeader(message.payload.headers, 'Date'));
-      //$('#message-body').append(getBody(message.payload))
-      var ifrm =  $('#message-body')[0].contentWindow.document;
-      $('body', ifrm).html(getBody(message.payload));
+        appendPre('Email:');
+        appendPre(getHeader(message.payload.headers, 'From'));
+        appendPre(getHeader(message.payload.headers, 'Subject'));
+        appendPre(getHeader(message.payload.headers, 'Date'));
+        //$('#message-body').append(getBody(message.payload))
+        var ifrm = $('#message-body')[0].contentWindow.document;
+        $('body', ifrm).html(getBody(message.payload));
       } else {
         appendPre('Sorry no message found');
       }
     }
 
     function getHeader(headers, index) {
-        var header = '';
+      var header = '';
 
-        $.each(headers, function(){
-          if(this.name === index){
-            header = this.value;
-          }
-        });
-        return header;
-      }
-
-      function getBody(message) {
-        var encodedBody = '';
-        if(typeof message.parts === 'undefined')
-        {
-          encodedBody = message.body.data;
+      $.each(headers, function () {
+        if (this.name === index) {
+          header = this.value;
         }
-        else
-        {
-          encodedBody = getHTMLPart(message.parts);
-        }
-        encodedBody = encodedBody.replace(/-/g, '+').replace(/_/g, '/').replace(/\s/g, '');
-        return decodeURIComponent(escape(window.atob(encodedBody)));
-      }
+      });
+      return header;
+    }
 
-      function getHTMLPart(arr) {
-        for(var x = 0; x <= arr.length; x++)
-        {
-          if(typeof arr[x].parts === 'undefined')
-          {
-            if(arr[x].mimeType === 'text/html')
-            {
-              return arr[x].body.data;
-            }
-          }
-          else
-          {
-            return getHTMLPart(arr[x].parts);
+    function getBody(message) {
+      var encodedBody = '';
+      if (typeof message.parts === 'undefined') {
+        encodedBody = message.body.data;
+      }
+      else {
+        encodedBody = getHTMLPart(message.parts);
+      }
+      encodedBody = encodedBody.replace(/-/g, '+').replace(/_/g, '/').replace(/\s/g, '');
+      return decodeURIComponent(escape(window.atob(encodedBody)));
+    }
+
+    function getHTMLPart(arr) {
+      for (var x = 0; x <= arr.length; x++) {
+        if (typeof arr[x].parts === 'undefined') {
+          if (arr[x].mimeType === 'text/html') {
+            return arr[x].body.data;
           }
         }
-        return '';
+        else {
+          return getHTMLPart(arr[x].parts);
+        }
       }
+      return '';
+    }
 
-      /**
- * Modify the Labels a Thread is associated with.
- *
- * @param  {String} userId User's email address. The special value 'me'
- * can be used to indicate the authenticated user.
- * @param  {String} threadId ID of Thread to modify.
- * @param  {Array} labelsToAdd Array of Labels to add.
- * @param  {Array} labelsToRemove Array of Labels to remove.
- * @param  {Function} callback Function to call when the request is complete.
- */
-function modifyThread(userId, threadId, labelsToAdd, labelsToRemove, callback) {
-  var request = gapi.client.gmail.users.threads.modify({
-    'userId': userId,
-    'id': threadId,
-    'addLabelIds': labelsToAdd,
-    'removeLabelIds': labelsToRemove
-  });
-  request.execute(callback);
-}
+        // Google Function
+    function modifyThread(threadId, labelsToAdd, labelsToRemove, callback) {
+      var request = gapi.client.gmail.users.threads.modify({
+        'userId': userConstId,
+        'id': threadId,
+        'addLabelIds': labelsToAdd,
+        'removeLabelIds': labelsToRemove
+      });
+      request.execute(callback);
+    }
+    // Google Function
+    function trashMessage(messageId, callback) {
+      var request = gapi.client.gmail.users.messages.trash({
+        'userId': userConstId,
+        'id': messageId,
+      });
+      request.execute(callback);
+    }
 
-function markMessageasRead(){
-  console.log(allMessages[currentIndex]);
-  modifyThread('me',allMessages[currentIndex].threadId,undefined,["UNREAD"], function(result){ alert('supostamente corri');});
-}
+    function markThreadasUnRead() {
+      console.log(allMessages[currentIndex]);
+      modifyThread( allMessages[currentIndex].threadId, ["UNREAD"], undefined, function (result) { alert('supostamente corri'); });
+    }
+
+    function markThreadasRead() {
+      console.log(allMessages[currentIndex]);
+      modifyThread( allMessages[currentIndex].threadId, undefined, ["UNREAD"], function (result) { alert('supostamente corri'); });
+    }
 
   </script>
 
