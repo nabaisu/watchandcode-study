@@ -1,122 +1,197 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <!-- Required meta tags -->
-    <meta charset="utf-8" />
-    <meta
-      name="viewport"
-      content="width=device-width, initial-scale=1, shrink-to-fit=no"
-    />
 
-    <!-- Bootstrap CSS -->
-    <link
-      rel="stylesheet"
-      href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
-      integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm"
-      crossorigin="anonymous"
-    />
-    <style>
+<head>
+  <!-- Required meta tags -->
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
 
-    </style>
-    <title>Nabais Running Stats</title>
-  </head>
-  <body>
-    <!-- Navigation -->
-    <header>
-    <nav class="navbar navbar-expand-lg navbar-light bg-light sticky-top">
+  <!-- Bootstrap CSS -->
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
+    integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous" />
+  <link href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet"
+    integrity="sha384-wvfXpqpZZVQGK6TAh5PVlGOfQNHSoD2xbE+QkPxCAFlNEevoEH3Sl0sibVcOQVnN" crossorigin="anonymous">
+  <style>
+    .blur {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      opacity: 0.7;
+      z-index: 9999;
+      background-color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+  </style>
+  <title>Running Stats</title>
+
+</head>
+
+<body>
+  <!-- Navigation -->
+  <header>
+  <!-- <nav class="navbar navbar-expand-lg navbar-light bg-light sticky-top">
       <div class="container">
         <a class="navbar-brand" href="#">Start Bootstrap</a>
-        <button
-          class="navbar-toggler"
-          type="button"
-          data-toggle="collapse"
-          data-target="#navbarResponsive"
-          aria-controls="navbarResponsive"
-          aria-expanded="false"
-          aria-label="Toggle navigation"
-        >
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarResponsive"
+          aria-controls="navbarResponsive" aria-expanded="false" aria-label="Toggle navigation">
           <span class="navbar-toggler-icon"></span>
         </button>
         <div class="collapse navbar-collapse" id="navbarResponsive">
           <ul class="navbar-nav ml-auto">
             <li class="nav-item active">
-              <a class="nav-link" href="#"
-                >Home
+              <a class="nav-link" href="#">Home
                 <span class="sr-only">(current)</span>
               </a>
             </li>
             <li class="nav-item">
-              <a class="nav-link" href="#">About</a>
+              <a class="nav-link" onclick="getDataFromGoogleFit()">About</a>
             </li>
             <li class="nav-item">
               <a class="nav-link" href="#">Services</a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link" href="#">Contact</a>
             </li>
           </ul>
         </div>
       </div>
     </nav>
-    </header>
-<main>
+     -->
+  </header>
+  <main>
     <div class="siema">
       <div class="fullpage">
-        <div class="container">
-          <h1 class="text-center" id="dayToDisplay">Today</h1>
-          <ul class="list-group">
-            <li class="list-group-item text-center"></li>
-            <li class="list-group-item text-center"></li>
-            <li class="list-group-item text-center"></li>
-          </ul>
+        <div class="container d-flex flex-column">
+          <div class="container text-center my-3">
+            <h1 class="" onclick="getDataFromGoogleFit()" id="dayToDisplay">Today</h1>
+            <input type="date" name="startingDate" id="startingDate">
+            <input type="date" name="endingDate"  id="endingDate" class="d-none">
+          </div>
+          <div class="container text-center mb-3" type="button" data-toggle="collapse" data-target="#swimCollapse"
+            aria-expanded="false" aria-controls="swimCollapse">
+            <i class="fas fa-swimmer h2"></i> <span class="h1" id="swimDone">00</span><span class="h2">/</span><span
+              class="h2" id="swimNeeded">23</span><span class="h3">km</span>
+            <div class="progress">
+              <div id="swimProgressBar" class="progress-bar bg-primary" role="progressbar" style="width: 25%" aria-valuenow="25"
+                aria-valuemin="0" aria-valuemax="100"></div>
+            </div>
+            <div class="collapse" id="swimCollapse">
+              <div class="d-flex flex-row row">
+                <div class="col-md-6" id="swimDoneDetails">
+                </div>
+                <div class="col-md-6" id="swimNeededDetails">
+                </div>
+
+              </div>
+            </div>
+          </div>
+          <div class="container text-center mb-3"  type="button" data-toggle="collapse" data-target="#cycleCollapse"
+          aria-expanded="false" aria-controls="cycleCollapse">
+            <i class="fas fa-biking h2"></i> <span class="h1" id="cycleDone">00</span><span class="h2">/</span><span
+              class="h2" id="cycleNeeded">23</span><span class="h3">km</span>
+            <div class="progress">
+              <div id="cycleProgressBar" class="progress-bar bg-warning" role="progressbar" style="width: 64%" aria-valuenow="25"
+                aria-valuemin="0" aria-valuemax="100"></div>
+            </div>
+            <div class="collapse" id="cycleCollapse">
+              <div class="d-flex flex-row row">
+                <div class="col-md-6" id="cycleDoneDetails">
+                </div>
+                <div class="col-md-6" id="cycleDoneDetails">
+                </div>
+
+              </div>
+            </div>
+
+          </div>
+          <div class="container text-center mb-3"  type="button" data-toggle="collapse" data-target="#runCollapse"
+          aria-expanded="false" aria-controls="runCollapse">
+            <i class="fas fa-running h2"></i> <span class="h1" id="runDone">00</span><span class="h2">/</span><span
+              class="h2" id="runNeeded">23</span><span class="h3">km</span>
+            <div class="progress">
+              <div id="runProgressBar" class="progress-bar bg-success" role="progressbar" style="width: 54%" aria-valuenow="25"
+                aria-valuemin="0" aria-valuemax="100"></div>
+            </div>
+            <div class="collapse" id="runCollapse">
+              <div class="d-flex flex-row row">
+                <div class="col-md-6" id="runDoneDetails">
+                </div>
+                <div class="col-md-6" id="runDoneDetails">
+                </div>
+
+              </div>
+            </div>
+
+          </div>
         </div>
       </div>
-      <div class="fullpage">
-        <h1>Hello, world!</h1>
-        <h2>I'm at the second one</h1>
+      <div class="fullpage row">
+        <div class="col-md-6">
+          <div class="d-flex flex-column">
+            <h1>Your Data</h1>
+            <button id="authorize_button_google_fit" class="btn btn-primary" style="display: none;">connect Google Fit</button>
+            <button id="signout_button_google_fit" class="btn btn-dark" style="display: none;">Sign Out Google Fit</button>
+            <button id="authorize_button_strava" class="btn btn-warning">connect Strava</button>
+            <button id="signout_button_strava" class="btn btn-dark" style="display: none;">Sign Out Strava</button>
+          </div>
         </div>
-      <div class="fullpage">
-        <h1>Hello, world!</h1>
-        <h2>I'm at the third one</h1>
-        </div>
-    </div>
-</main>
+        <div class="col-md-6">
+          <div class="d-flex  flex-column">
+            <h1>Your Goal Data</h1>
+            <button class="btn btn-success">connect your Goal Data</button>
+          </div>
 
-    <!-- Optional JavaScript -->
-    <!-- jQuery first, then Popper.js, then Bootstrap JS -->
-    <script
-      src="https://code.jquery.com/jquery-3.2.1.slim.min.js"
-      integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN"
-      crossorigin="anonymous"
-    ></script>
-    <script
-      src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"
-      integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q"
-      crossorigin="anonymous"
-    ></script>
-    <script
-      src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"
-      integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl"
-      crossorigin="anonymous"
-    ></script>
-    <script src="https://pawelgrzybek.com/siema/assets/siema.min.js"></script>
-    <script src="./js/script.js"></script>
-    <script>
-      const mySiema = new Siema();
-      $("#amigo").click(function() {
-        alert("abri isto");
-      });
-      // listen for keydown event
+        </div>
+        <!-- 
+          <div id="blur" class="blur">
+            <button id="authorize_button" class="btn btn-primary btn-lg" style="display: none;">Authorize</button>
+          </div>
+         -->
+      </div>
+    </div>
+  </main>
+
+  <!-- Optional JavaScript -->
+  <!-- jQuery first, then Popper.js, then Bootstrap JS -->
+  <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"
+    integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN"
+    crossorigin="anonymous"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"
+    integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q"
+    crossorigin="anonymous"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"
+    integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl"
+    crossorigin="anonymous"></script>
+  <script src="https://pawelgrzybek.com/siema/assets/siema.min.js"></script>
+  <script src="https://kit.fontawesome.com/a076d05399.js"></script>
+  <script src="./script.js"></script>
+  <script>
+    const mySiema = new Siema();
+    // listen for keydown event
     document.addEventListener('keydown', (e) => {
-    // if it's left arrow key
-    if (e.keyCode === 37) {
+      // if it's left arrow key
+      if (e.keyCode === 37) {
         mySiema.prev()
       }
-    // if it's right arrow key
-    else if (e.keyCode === 39) {
-      mySiema.next()
-    }
+      // if it's right arrow key
+      else if (e.keyCode === 39) {
+        mySiema.next()
+      }
     })
+    function today(){
+      $('#startingDate').val(new Date().toISOString().split('T')[0])
+      $('#endingDate').val(new Date().toISOString().split('T')[0])
+    };
+    today();
+    $('#startingDate').on('change',()=> {
+      render();
+    });
+  </script>
+  <script async defer src="https://apis.google.com/js/api.js" onload="this.onload=function(){};handleClientLoad()"
+    onreadystatechange="if (this.readyState === 'complete') this.onload()">
     </script>
-  </body>
+</body>
+
 </html>
