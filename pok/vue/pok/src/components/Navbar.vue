@@ -44,7 +44,6 @@ export default {
     }
   },
   created(){
-    // let user = firebase.auth().currentUser
     firebase.auth().onAuthStateChanged((user) => {
       if(user){
         this.user = user
@@ -56,7 +55,7 @@ export default {
   methods: {
     logout(){
       firebase.auth().signOut().then(() => {
-        this.$router.push({ name: 'Login' })
+        this.$router.push({ name: 'Home' })
       })
     }
   }

@@ -6,11 +6,14 @@
 </template>
 
 <script>
+import firebase from 'firebase'
 import Navbar from '@/components/Navbar'
+import BottomNavbar from '@/components/BottomNavbar'
 export default {
   components: {
-    Navbar
-  }
+    Navbar,
+    BottomNavbar
+  },
 }
 </script>
 

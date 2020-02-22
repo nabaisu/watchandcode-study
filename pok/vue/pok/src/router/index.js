@@ -4,6 +4,9 @@ import Home from '../views/Home.vue'
 import About from '../views/About.vue'
 import Login from '../views/auth/Login.vue'
 import Signup from '../views/auth/Signup.vue'
+import Dashboard from '../views/Dashboard.vue'
+import Add from '../views/Add.vue'
+import P404 from '../views/404.vue'
 import firebase from 'firebase'
 
 Vue.use(VueRouter)
@@ -20,9 +23,30 @@ const routes = [
     component: Signup
   },
   {
+    path: '/404',
+    name: '404',
+    component: P404
+  },
+  {
     path: '/',
     name: 'Home',
     component: Home
+  },
+  {
+    path: '/me',
+    name: 'Dashboard',
+    component: Dashboard,
+    meta: {
+      requiresAuth: true
+    },
+  },
+  {
+    path: '/add',
+    name: 'Add',
+    component: Add,
+    meta: {
+      requiresAuth: true
+    },
   },
   {
     path: '/about',
