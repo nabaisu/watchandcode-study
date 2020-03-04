@@ -93,7 +93,7 @@ export default {
           .then(user => {
             //check if the collection exists
             this.createCatchCollection(user);
-            this.$router.push({ name: "Home" });
+            this.$router.push({ name: "Dashboard" });
           })
           .catch(err => {
             this.feedback = err.message;
