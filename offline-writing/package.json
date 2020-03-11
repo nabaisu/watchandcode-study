@@ -1,0 +1,22 @@
+{
+  "name": "nabais-offline-writing-app",
+  "version": "1.0.0",
+  "description": "My attempt at building a PWA offline first",
+  "main": "index.js",
+  "scripts": {
+    "start": "http-server -c-1"
+  },
+  "keywords": [
+    "pwa",
+    "progressive",
+    "web",
+    "app",
+    "complete",
+    "tutorial"
+  ],
+  "author": "Nabais",
+  "license": "MIT",
+  "devDependencies": {
+    "http-server": "^0.12.1"
+  }
+}
