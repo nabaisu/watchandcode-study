@@ -5,6 +5,17 @@ var showInstall = document.querySelector('#show-install');
 var createPostArea = document.querySelector('#create-post');
 var closeCreatePostModalButton = document.querySelector('#close-create-post-modal-btn');
 
+function onCardSaveClicked(event) {
+  console.log('clicked')
+  if ('caches' in window) {
+  caches.open('user-requested')
+        .then(function(cache){
+          cache.add('https://httpbin.org/get');
+          // if another image or request would be needed then we can add it here as well
+        })
+      }
+}
+
 function createTextCard() {
   var cardWrapper = document.createElement('div');
   cardWrapper.className = "card m-3";
@@ -17,9 +28,14 @@ function createTextCard() {
   var cardSupportingText = document.createElement('p');
   cardSupportingText.className = "card-text";
   cardSupportingText.textContent = "basicamente isto devia ser o meu primeiro texto, mas por acaso até não é, e pronto, não tenho muito mais para dizer"
+  var cardSaveButton = document.createElement('button');
+  //cardSaveButton.textContent = 'save'
+  //cardSaveButton.className = 'btn btn-success'
+  //cardSaveButton.addEventListener('click', onCardSaveClicked);
   cardWrapper.appendChild(cardBody);
   cardBody.appendChild(cardTitle);
   cardBody.appendChild(cardSupportingText);
+  //cardBody.appendChild(cardSaveButton);
   feedContent.appendChild(cardWrapper);
 }
 
@@ -28,7 +44,6 @@ fetch('https://httpbin.org/get')
   return res.json();
 })
 .then(function(data) {
-  createTextCard();
   createTextCard();
 });
 
