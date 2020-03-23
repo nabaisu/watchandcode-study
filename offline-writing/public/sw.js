@@ -1,3 +1,5 @@
+importScripts('/src/js/idb.js');
+
 // comment
 var CACHE_STATIC_NAME = "static-v2"
 var CACHE_DYNAMIC_NAME = "dynamic"
@@ -13,15 +15,52 @@ var listOfAppShell = [
     '/src/css/feed.css',
     '/src/css/app.css',
     'https://fonts.googleapis.com/css?family=Roboto:400,700',
-    'https://fonts.googleapis.com/icon?family=Material+Icons',
+    //'https://fonts.googleapis.com/icon?family=Material+Icons',
     'https://cdn.quilljs.com/1.3.6/quill.snow.css',
     'https://cdn.quilljs.com/1.3.6/quill.js',
+    '/src/js/firebase-app.js',
     '/offline/',
-    '/offline/index.html'
+    '/offline/index.html',
+    //'/src/js/FireStoreParser.js',
+    '/src/js/idb.js',
+    '/src/js/toastr.min.js',
+    "/src/js/popper.min.js",
+    "/src/js/is-private-mode.js",
+    "/src/css/toastr.min.css",
+    "https://use.fontawesome.com/releases/v5.0.13/css/all.css",
+    '/favicon.ico'
 ]
 
+var fireBaseURL = `https://firestore.googleapis.com/v1/projects/offline-diary/databases/(default)/documents/`//?key=${key}`
+
+//=================
+// IndexedDB
+//=================
+var dbPromise = idb.open('texts-store', 1, function (db) {
+    // will always try to create, so we need to check if it already exists
+    if (!db.objectStoreNames.contains('texts')) {
+        db.createObjectStore('texts', { keyPath: 'id' });
+    }
+});
+
+
+//======================================
+//           HELPER FUNCTIONS
+//======================================
+function isInArray(string, array) {
+    var cachePath;
+    if (string.indexOf(self.origin) === 0) { //request targets domain where we serve the page from (i.e. NOT a CDN)
+        console.log('matched', string);
+        cachePath = string.substring(self.origin.length); //take the part of the URL AFTER the domain (e.g. after localhost:8080)
+    } else {
+        cachePath = string; // store the full request (for CDNSs)
+    }
+    return array.indexOf(cachePath) > -1;
+}
+
+
 //==============================================
-//                PRE CACHING
+//      SW INSTALL!       PRE CACHING
 //==============================================
 
 self.addEventListener('install', (event) => {
@@ -39,9 +78,9 @@ self.addEventListener('install', (event) => {
 });
 
 self.addEventListener('activate', (event) => {
-    //===================================
-    //       CLEANING OF CACHES
-    //===================================
+    //==========================================================
+    //     SW INSTALL!   CLEANING OF CACHES IF VERSION CHANGED
+    //==========================================================
     event.waitUntil(
         caches.keys()
             .then(function (keyList) {
@@ -58,36 +97,79 @@ self.addEventListener('activate', (event) => {
     return self.clients.claim();
 });
 
+//==============================================
+//          FETCH INTERCEPTING
+//==============================================
+//DYNAMIC CACHE THEN NETWORK FOR SPECIFIC URL AND DYNAMIC CACHE WITH NETWORK FALLBACK FOR THE REST
 self.addEventListener('fetch', (event) => {
     //console.log('[SW] Fetching Service Worker', event);
 
-    //============================================
-    //              GO OFFLINE
-    //============================================
-    event.respondWith(
-        caches.match(event.request)
-            .then(function (response) {
-                if (response) { // if there is no request it gives null
-                    return response;
-                } else {
-                    return fetch(event.request)
-                        //=================================
-                        //          DYNAMIC CACHING
-                        //=================================
-                        .then(function (res) {
-                            return caches.open(CACHE_DYNAMIC_NAME)
-                                .then(function (cache) {
-                                    cache.put(event.request.url, res.clone()) //res = response
-                                    return res; // here basically we have to return the response again to chain up the responses 
-                                })
-                        })
-                        .catch(function (err) {
-                            return caches.open(CACHE_STATIC_NAME)
-                                .then(function (cache) {
-                                    return cache.match('/offline/')
-                                });
-                        });
-                }
-            })
-    );
+    //CACHE THEN NETWORK FOR SPECIFIC URL
+    var specificURL = fireBaseURL + 'texts/Um0bLkWCYAN07gijMX12SmFykgX2';
+
+    if (event.request.url.indexOf(specificURL) > -1) {
+        event.respondWith(
+            fetch(event.request)
+                .then((res) => {
+                    // here instead of caching dynamically the cache, we can go for IndexedDB   
+                    var clonedRes = res.clone();
+                    clonedRes.json()
+//                            .then(function (json) {
+//                                return FireStoreParser(json)
+//                            })
+                            .then(function (data) {
+                                for (key in data.fields.texts.arrayValue.value) {
+                                    dbPromise.then(function(db) {
+                                        var tx = db.transaction('texts', 'readwrite');
+                                        var store = tx.objectStore();
+                                        store.put(data.fields.texts[key]);
+                                        return tx.complete;
+                                    })                                    
+                                }
+                            })                                     
+                    //cache.put(event.request, res.clone());
+                    return res
+                })
+        );
+        //CACHE ONLY
+    } else if (isInArray(event.request.url, listOfAppShell)) {
+        event.respondWith(
+            caches.match(event.request)
+        )
+    } else {
+        //DYNAMIC CACHE WITH NETWORK FALLBACK
+        //============================================
+        //              GO OFFLINE
+        //============================================
+        event.respondWith(
+            caches.match(event.request)
+                .then(function (response) {
+                    if (response) { // if there is no request it gives null
+                        return response;
+                    } else {
+                        return fetch(event.request)
+                            //=================================
+                            //          DYNAMIC CACHING
+                            //=================================
+                            .then(function (res) {
+                                return caches.open(CACHE_DYNAMIC_NAME)
+                                    .then(function (cache) {
+                                        cache.put(event.request.url, res.clone()) //res = response
+                                        return res; // here basically we have to return the response again to chain up the responses 
+                                    })
+                            })
+                            .catch(function (err) {
+                                return caches.open(CACHE_STATIC_NAME)
+                                    .then(function (cache) {
+                                        // here goes the routing (can do regex express)
+                                        //basically here we can send the offline page if the request is a page
+                                        if (event.request.headers.get('accept').includes('text/html')) {
+                                            return cache.match('/offline/')
+                                        }
+                                    });
+                            });
+                    }
+                })
+        );
+    }
 });
