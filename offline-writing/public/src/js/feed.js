@@ -1,3 +1,7 @@
+var IDBIableToWriteTo = 'texts'
+var IDBName = 'texts'
+
+
 var onlineEl = document.getElementById('online');
 var offlineEl = document.getElementById('offline');
 var feedContent = document.getElementById('feed-content');
@@ -38,7 +42,7 @@ function setMode() {
     hide(offlineEl);
     show(onlineEl);
     fullscreen(false);
-    setTimeout(function(){setFocusText()},0)
+    setTimeout(function () { setFocusText() }, 0)
     console.log('☹️ I\'m online =(');
   } else {
     hide(onlineEl);
@@ -48,22 +52,27 @@ function setMode() {
   }
 }
 
-var dbPromise = idb.open('texts-store', 1, function (db) {
-  // will always try to create, so we need to check if it already exists
-  if (!db.objectStoreNames.contains('texts')) {
-    db.createObjectStore('texts', { keyPath: 'id' });
-  }
-});
+var dbPromise = openDBConnection(IDBName);
+
+function openDBConnection(nameOfTable) {
+  return idb.open('texts-store', 1, function (db) {
+    // will always try to create, so we need to check if it already exists
+    if (!db.objectStoreNames.contains(nameOfTable)) {
+      db.createObjectStore(nameOfTable, { keyPath: 'id' });
+    }
+  });
+}
+
 
 //====================================
 //      HELPER FUNCTIONS
 //====================================
 var hide = function (elem) {
-	elem.style.display = 'none';
+  elem.style.display = 'none';
 };
 
 var show = function (elem) {
-	elem.style.display = 'block';
+  elem.style.display = 'block';
 };
 
 function generateId() {
@@ -123,7 +132,7 @@ searchBox.addEventListener('input', function (evt) {
 });
 
 function getRandomTitle() {
-  return 'untitled-' + Math.random().toString(36).substr(2, 7);
+  return getDatefromISO((new Date()).toISOString()) + '-' + Math.random().toString(36).substr(2, 7);
 }
 
 function createNewText() {
@@ -167,8 +176,8 @@ function storeDataToIDB(whatToDo, data) {
       return new Promise(function (resolve, reject) {
         //++ still to do
         dbPromise.then(function (db) {
-          var tx = db.transaction('texts', 'readwrite');
-          var store = tx.objectStore('texts');
+          var tx = db.transaction(IDBIableToWriteTo, 'readwrite');
+          var store = tx.objectStore(IDBIableToWriteTo);
           store.add(data);
           return tx.complete;
         }).then(function () {
@@ -183,8 +192,8 @@ function storeDataToIDB(whatToDo, data) {
     case 'update':
       return new Promise(function (resolve, reject) {
         dbPromise.then(function (db) {
-          var tx = db.transaction('texts', 'readwrite');
-          var store = tx.objectStore('texts');
+          var tx = db.transaction(IDBIableToWriteTo, 'readwrite');
+          var store = tx.objectStore(IDBIableToWriteTo);
           store.put(data);
           return tx.complete;
         }).then(function () {
@@ -196,8 +205,8 @@ function storeDataToIDB(whatToDo, data) {
     case 'delete':
       return new Promise(function (resolve, reject) {
         dbPromise.then(function (db) {
-          var tx = db.transaction('texts', 'readwrite');
-          var store = tx.objectStore('texts');
+          var tx = db.transaction(IDBIableToWriteTo, 'readwrite');
+          var store = tx.objectStore(IDBIableToWriteTo);
           store.delete(data);
           return tx.complete;
         }).then(function () {
@@ -249,7 +258,7 @@ function selectCardBackground(uid, color = "primary") {
   }
 }
 
-function clearAllSelectedCards(){
+function clearAllSelectedCards() {
   var selectedCards = document.querySelector('.modify-selected')
   if (selectedCards !== null) {
     selectedCards.classList.remove('bg-primary')
@@ -264,8 +273,8 @@ function getTextDataById(uid) {
   //resolve(data)
   //})
   return dbPromise.then(function (db) {
-    var tx = db.transaction('texts', 'readonly');
-    var store = tx.objectStore('texts');
+    var tx = db.transaction(IDBIableToWriteTo, 'readonly');
+    var store = tx.objectStore(IDBIableToWriteTo);
     return store.get(uid);
   }).then(function (data) {
     return data
@@ -302,11 +311,11 @@ function clearCards() {
   }
 }
 
-function getDatefromISO(dat){
-  return dat.substring(0,10)
+function getDatefromISO(dat) {
+  return dat.substring(0, 10)
 }
 
-function createNewTextCard(){
+function createNewTextCard() {
   var cardWrapper = document.createElement('div');
   cardWrapper.className = "card m-3 modify-selected bg-success";
   cardWrapper.id = "newtextcard"
@@ -318,7 +327,7 @@ function createNewTextCard(){
   cardTitle.textContent = "New Text";
   var cardSupportingText = document.createElement('p');
   cardSupportingText.className = "card-text";
-  cardSupportingText.textContent = "just go offline for a new text"
+  cardSupportingText.textContent = "just go offline for a new text. Text will be saved to: " + IDBName
   cardWrapper.onclick = function () { setFocusText(); };
   cardWrapper.appendChild(cardBody);
   cardBody.appendChild(cardTitle);
@@ -335,10 +344,10 @@ function createTextCard(text) {
   cardBody.className = "card-body";
   var cardTitle = document.createElement('h3');
   cardTitle.className = "card-title";
-  cardTitle.ondblclick = function() {
+  cardTitle.ondblclick = function () {
     editTitleStart(cardTitle);
   }
-  cardTitle.onblur = function(){
+  cardTitle.onblur = function () {
     editTitleEnd(cardTitle);
   }
   cardTitle.style.cursor = "pointer";
@@ -374,7 +383,7 @@ function createTextCard(text) {
   cardBody.appendChild(cardTitle);
   cardBody.appendChild(cardSupportingText);
   cardBody.appendChild(cardDate);
-  
+
   cardBody.appendChild(cardSeeButton);
   cardBody.appendChild(cardEditButton);
   cardBody.appendChild(cardDeleteButton);
@@ -386,7 +395,7 @@ function createTextCard(text) {
 function generateFAIcon(name, type = "fa") {
   let iconContainer = document.createElement('i');
   iconContainer.className = type
-  iconContainer.className += ' fa-'+name
+  iconContainer.className += ' fa-' + name
   //iconContainer.innerHTML = icon({ prefix: type, iconName: name }).html;
   return iconContainer;
 }
@@ -428,26 +437,25 @@ function fullscreen(bool) {
       document.msExitFullscreen();
     }
   }
-
 }
 
 function editTitleStart(elem) {
   elem.classList.add('inEdit')
-  elem.contentEditable=true;
+  elem.contentEditable = true;
 }
 
 function editTitleEnd(elem) {
   saveChangedTitle(elem)
-    .then(function(result) {
+    .then(function (result) {
       if (result) {
-        elem.contentEditable=false;
-        elem.classList.remove('inEdit')  
-      } 
-  })  
+        elem.contentEditable = false;
+        elem.classList.remove('inEdit')
+      }
+    })
 }
 
 function regexContainsWords(text) {
-  if (RegExp('\\w+','g').test(text)) {
+  if (RegExp('\\w+', 'g').test(text)) {
     return true
   }
   return false
@@ -456,24 +464,24 @@ function regexContainsWords(text) {
 function saveChangedTitle(elem) {
   //++ TODO (check the text and then save the changedTitle to the IDB)
   var reverseTitle = false;
-  return new Promise(function(resolve, reject){
+  return new Promise(function (resolve, reject) {
     if (!regexContainsWords(elem.textContent)) {
       reverseTitle = true;
     }
     getTextDataById(elem.parentNode.parentNode.id)
-              .then(function (data) {
-                if (reverseTitle) {
-                  elem.textContent = data.title
-                  toastr["error"]("sorry but the title can't be empty")
-                  return resolve(false);
-                }
-                data.title = elem.textContent
-                storeDataToIDB('update', data)
-              .then(function (params) {
-                  toastr["success"]('updated the title')
-                  return resolve(true);
-                })
-    })
+      .then(function (data) {
+        if (reverseTitle) {
+          elem.textContent = data.title
+          toastr["error"]("sorry but the title can't be empty")
+          return resolve(false);
+        }
+        data.title = elem.textContent
+        storeDataToIDB('update', data)
+          .then(function (params) {
+            toastr["success"]('updated the title')
+            return resolve(true);
+          })
+      })
   })
 }
 
@@ -490,6 +498,12 @@ function separateByDay(data = []) {
 }
 
 function updateUI() {
+  if (!this.currentUser) {
+    IDBIableToWriteTo = 'texts'
+  } else {
+    IDBIableToWriteTo = window.currentUser.uid
+  }
+
   //get from the IndexedDB
   getAllTextsFromUser().then(function (data) {
     clearCards();
@@ -510,8 +524,12 @@ function updateUI() {
   });
 }
 
+function syncTextsWithFirebase() {
+  // if first time (table with id does not exist, then)
+}
+
 function checkIfCardHasSearch(data, text) {
-  let a = new RegExp(text,"g")
+  let a = new RegExp(text, "g")
   for (keys in data) {
     if (a.test(data[keys])) {
       return true
@@ -523,8 +541,8 @@ function checkIfCardHasSearch(data, text) {
 function getAllTextsFromUser() {
   return new Promise(function (resolve, reject) {
     dbPromise.then(function (db) {
-      var tx = db.transaction('texts', 'readonly');
-      var store = tx.objectStore('texts');
+      var tx = db.transaction(IDBIableToWriteTo, 'readonly');
+      var store = tx.objectStore(IDBIableToWriteTo);
       return store.getAll();
     }).then(function (items) {
       return resolve(items);
@@ -608,3 +626,27 @@ showInstall.addEventListener('click', showInstallPrompt);
 closeCreatePostModalButton.addEventListener('click', closeCreatePostModal);
 
 updateUI();
+
+
+
+var prev_handler = window.onload;
+window.onload = function () {
+  //get old code to run here
+  if (prev_handler) {
+    prev_handler();
+  }
+  //set new window.onload code
+  firebase.auth().onAuthStateChanged(function (user) {
+    self.currentUser = user;
+    updateUI();
+  });
+};
+
+
+
+// window.onload = function () {
+//   firebase.auth().onAuthStateChanged(function (user) {
+//     window.currentUser = user;
+//     updateUI();
+//   })
+// };

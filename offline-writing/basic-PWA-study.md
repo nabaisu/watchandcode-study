@@ -382,6 +382,86 @@ Possible Multiple Object Stores (like tables)
 Database => Object Store => Object
 (Typically 1 DB/app) => (Like a table) => (What to store)
 
+Service Workers don't care about the files loaded in the project (this means you can't use their code).
+However, it is possible to import scripts into the service worker, by doing:
+#### importing script into service worker
+`importScripts('/src/js/idb.js')`
+
+#### open a new database
+```javascript
+var dbPromise = idb.open('db-name', 1, function(db){ //this db gives us access to the database
+  if (!db.objectStoreNames.contains('table-name')) {
+    db.createObjectStore('table-name', {keyPayh: 'id'}) // we define an object that has our primary key
+  }
+})
+```
+#### save the fetched request to idb
+```javascript
+  event.respondWith(
+    fetch(event.request)
+      .then((res) => {
+       // here instead of caching dynamically the cache, we can go for IndexedDB   
+        var clonedRes = res.clone();
+        clonedRes.json()
+            .then(function(data){
+              for (var key in data) {
+                dbPromise
+                    .then(function(db){
+                      var tx = db.transaction('table-nome', 'readonly');
+                      var store = tx.objectStore('table-name');
+                      store.put(data[key]); // we must have the 'id' property inside the data[key]
+                      return tx.complete;
+                    })
+              }
+            })
+        return res;
+      })
+  )
+```
+
+__important__: have in mind that, if we cache the indexedDB data, then if we change the dynamic data (fetch), we need to update the indexedDB to show the updated data.
+We can either clear the whole DB and repopulate, or we can just delete 1 item from the indexedDB
+_allData_
+```javascript
+function clearAll(st){
+  return dbPromise
+      .then(function(db){
+        var tx = db.transaction(st, 'readwrite');
+        var store = tx.objectStore(st);
+        store.clear(); // this will clear all
+        return tx.complete;
+      })
+}
+```
+_justOne_
+```javascript
+function deleteItemFromData(st, id){
+  return dbPromise
+      .then(function(db){
+        var tx = db.transaction(st, 'readwrite');
+        var store = tx.objectStore(st);
+        store.delete(id); // this will delete by an id
+        return tx.complete;
+      })
+      .then(function(){
+        console.log('deleted item from idb:',id)
+      })
+}
+```
+
+### caching with indexedDB
+It can be used for all of the caching strategies, replacing the caching instead of the fetch.
+However, it's much better for json and dynamic stuff.
+
+
+## responsive design
+### media queries
+
+
+
+
+
+
 
 
 # step by step
