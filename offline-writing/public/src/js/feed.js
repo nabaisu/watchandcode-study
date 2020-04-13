@@ -35,31 +35,42 @@ isPrivateMode().then(function (isPrivate) {
 function setMode() {
   if (navigator.onLine) {
     //console.log((RegExp('\\w+','g').test(editorContent.innerText) || editor.focusedTextId));
-    if (regexContainsWords(editorContent.innerText) || editor.focusedTextId) {
-      saveText();
+    if (regexContainsWords(editorContent.innerText) || editor.dataset.focusedTextId) {
+      if (editor.dataset.focusedTextId && !regexContainsWords(editorContent.innerText)) {
+        deleteFromIDB(editor.dataset.focusedTextId);
+      } else {
+        saveText();
+      }
     }
     //setFocusText();
     hide(offlineEl);
     show(onlineEl);
-    fullscreen(false);
+    //fullscreen(false);
     setTimeout(function () { setFocusText() }, 0)
     console.log('☹️ I\'m online =(');
   } else {
     hide(onlineEl);
     show(offlineEl);
-    fullscreen(true);
+    //fullscreen(true);
     console.log('😊 Offline! Let\'s work!! ');
   }
 }
 
-var dbPromise = openDBConnection(IDBName);
+var dbPromise = openDBConnection();
 
-function openDBConnection(nameOfTable) {
+function openDBConnection() {
   return idb.open('texts-store', 1, function (db) {
     // will always try to create, so we need to check if it already exists
-    if (!db.objectStoreNames.contains(nameOfTable)) {
-      db.createObjectStore(nameOfTable, { keyPath: 'id' });
+    if (!db.objectStoreNames.contains('texts')) {
+      db.createObjectStore('texts', { keyPath: 'id' });
     }
+    /*
+    if (this.currentUser) {
+      if (!db.objectStoreNames.contains(this.currentUser.uid)) {
+        db.createObjectStore(this.currentUser.uid, { keyPath: 'id' });
+      }  
+    }
+    */
   });
 }
 
@@ -72,6 +83,7 @@ var hide = function (elem) {
 };
 
 var show = function (elem) {
+  //elem.style.transform = "translateY(0)";
   elem.style.display = 'block';
 };
 
@@ -317,9 +329,9 @@ function getDatefromISO(dat) {
 
 function createNewTextCard() {
   var cardWrapper = document.createElement('div');
-  cardWrapper.className = "card m-3 modify-selected bg-success";
+  cardWrapper.className = "card m-1 modify-selected bg-success card-responsive";
   cardWrapper.id = "newtextcard"
-  cardWrapper.style.width = "18rem";
+  //cardWrapper.style.width = "18rem";
   var cardBody = document.createElement('div');
   cardBody.className = "card-body";
   var cardTitle = document.createElement('h3');
@@ -337,9 +349,9 @@ function createNewTextCard() {
 
 function createTextCard(text) {
   var cardWrapper = document.createElement('div');
-  cardWrapper.className = "card m-3";
+  cardWrapper.className = "card m-1 card-responsive";
   cardWrapper.id = text.id
-  cardWrapper.style.width = "18rem";
+  //cardWrapper.style.width = "18rem";
   var cardBody = document.createElement('div');
   cardBody.className = "card-body";
   var cardTitle = document.createElement('h3');
@@ -501,7 +513,7 @@ function updateUI() {
   if (!this.currentUser) {
     IDBIableToWriteTo = 'texts'
   } else {
-    IDBIableToWriteTo = window.currentUser.uid
+    IDBIableToWriteTo = this.currentUser.uid
   }
 
   //get from the IndexedDB
@@ -642,6 +654,16 @@ window.onload = function () {
   });
 };
 
+function fetchUserTextsFromFirebase(userId) {
+  // get all the texts from the user
+  // 
+}
+
+function moveTextsFromOldIDB() {
+  // move the texts to user IDB
+  // check if everything went right (all the texts were successfully copied)
+  // remove the texts from the default IDB
+}
 
 
 // window.onload = function () {
@@ -650,3 +672,28 @@ window.onload = function () {
 //     updateUI();
 //   })
 // };
+
+function syncOffline() {
+  if ('serviceWorker' in navigator && 'SyncManager' in window) {
+      navigator.serviceWorker.ready
+      .then(function (sw) {
+        sw.sync.register('sync-new-post'); //any name, its a tag
+      })
+  }
+}
+
+function sendTextToFirebase(text){
+  fetch('url', {
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept':'application/json'
+    },
+    method: 'POST',
+    body: JSON.stringify(
+      {text}
+    )
+  }).then(function(res){
+    console.log('Sent data:',res)
+    //updateUI();
+  })
+}

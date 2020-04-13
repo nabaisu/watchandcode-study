@@ -173,3 +173,21 @@ self.addEventListener('fetch', (event) => {
         );
     }
 });
+
+
+self.addEventListener('sync',function(event) {
+    console.log('[Service Worker] Background Syncing', event);
+    if (event.tag === 'sync-new-posts') {
+        console.log('[Service Worker] Syncing new posts')
+        event.waitUntil(
+            readAllData('idb objectStore name sync store')
+                .then(function(data){
+                    //as there may be more than 1 of the data, loop
+                    for (var dt of data) {
+                        // here use the data somewhere
+                        // fetch().then(' delete the item from the sync store if response.ok') 
+                    }
+                })
+        )
+    }
+})
