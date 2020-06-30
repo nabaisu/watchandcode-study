@@ -1,0 +1,78 @@
+{
+  "login": {
+    "password": "aaaa",
+    "username": "bomdia"
+  },
+  "register": [
+    {
+      "id": "b2da2b2c-bace-11ea-b3de-0242ac130004",
+      "title": "json-server",
+      "author": "typicode",
+      "comments": {
+        "id": "bomdia"
+      }
+    },
+    {
+      "id": "6de19df8-883a-429c-b138-912a49846426",
+      "title": "aaaa-server",
+      "author": "typicode"
+    }
+  ],
+  "comments": [
+    {
+      "password": "aaaa",
+      "username": "bomdia",
+      "userId": "b2da2b2c-bace-11ea-b3de-0242ac130004",
+      "registerId": "b2da2b2c-bace-11ea-b3de-0242ac130004",
+      "id": "mUo-4qh"
+    }
+  ],
+  "change_env": {
+    "name": "typicode",
+    "bomdia": "teste"
+  },
+  "user": [
+    {
+      "id": "b2da2b2c-bace-11ea-b3de-0242ac130004",
+      "bomdia": {
+        "tasks": "thisTask",
+        "bomdia": [
+          {
+            "id": 1,
+            "bomdia": "teste"
+          },
+          {
+            "id": 2,
+            "bomdia": "teste"
+          },
+          {
+            "id": 3,
+            "bomdia": "teste"
+          }
+        ]
+      }
+    },
+
+    {
+      "id": "6de19df8-883a-429c-b138-912a49846426",
+      "bomdia": {
+        "tasks": "thisTask",
+        "bomdia": [
+          {
+            "id": 1,
+            "bomdia": "teste"
+          },
+          {
+            "id": 2,
+            "bomdia": "teste"
+          },
+          {
+            "id": 3,
+            "bomdia": "teste"
+          }
+        ]
+      }
+    },
+    {}
+  ]
+}
