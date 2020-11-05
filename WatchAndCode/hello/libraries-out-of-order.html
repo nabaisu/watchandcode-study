@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta charset="utf-8" />
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<title>beasts Nabais</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+
+<body>
+
+	<script
+		src="https://rawcdn.githack.com/nabaisu/jstinytest/28fe26d9a7c0de65b0c8e51b628782987683b751/simpletest.js"></script>
+	<script>
+
+		(function library() {
+			const libraryStorage = {};
+			const librarySystem = function (libraryName, dependencyArray, callback) {
+				if (arguments.length > 1) {
+					// create mode
+					// if the third argument is not a function, throw error
+					if (!(callback && {}.toString.call(callback) === '[object Function]')) {
+						throw 'third argument must be a function'
+					}
+					// if the second argument is not an array, throw error
+					if (!Array.isArray(dependencyArray)) {
+						throw 'second argument must be an array'
+					}
+				// just store the library and its informations
+					libraryStorage[libraryName] = {
+						dependencies: dependencyArray,
+						callback: callback,
+					};
+				} else {
+					if (!libraryStorage[libraryName]) { return }
+					return loadLibrary(
+						libraryName,
+						libraryStorage[libraryName].dependencies,
+						libraryStorage[libraryName].callback,
+					);
+				}
+				// export
+				window.librarySystem = librarySystem;
+
+				function loadLibrary(libraryName, dependencies, callback) {
+					// if it was already loaded, then return its result
+					if ('result' in libraryStorage[libraryName]) {
+						return libraryStorage[libraryName].result;
+					}
+					// if she has no dependency, then run directly and cache the result
+					if (libraryStorage[libraryName].dependencies.length === 0) {
+						libraryStorage[libraryName].result = callback();
+						return libraryStorage[libraryName].result;
+					}
+					// run the callback function of the function and store its value
+					libraryStorage[libraryName].result = libraryStorage[
+						libraryName
+					].callback.apply(null, loadDependencies(dependencies));
+					return libraryStorage[libraryName].result;
+				}
+
+				function loadDependencies(dependencies) {
+					let loadedDependencies = [];
+					loadedDependencies = dependencies.map((libraryName) => {
+						if (libraryStorage[libraryName]) {
+							return loadLibrary(
+								libraryName,
+								libraryStorage[libraryName].dependencies,
+								libraryStorage[libraryName].callback,
+							);
+						}
+					});
+					return loadedDependencies;
+				}
+			};
+			// export to root window
+			window.librarySystem = librarySystem;
+		}());
+
+		var testLibraryA = {
+			name: "testLibraryA",
+			func: function () {
+				return 'with testLibraryA';
+			},
+			dep: []
+		}
+
+		var testLibraryB = {
+			name: "testLibraryB",
+			func: function (testLibraryA) {
+				return 'app compatible ' + testLibraryA;
+			},
+			dep: [testLibraryA.name]
+		}
+
+		var testLibraryC = {
+			name: "testLibraryC",
+			func: function (testLibraryA, testLibraryB) {
+				return testLibraryB + ' and ' + testLibraryA;
+			},
+			dep: [testLibraryA.name, testLibraryB.name]
+		}
+
+		var testLibraryD = {
+			name: "testLibraryD",
+			func: function (testLibraryB, testLibraryA) {
+				return testLibraryB + ' and ' + testLibraryA
+			},
+			dep: [testLibraryB.name, testLibraryA.name]
+		}
+
+		tests({
+			'will not register a library if no function is provided': function () {
+				var isError = false;
+				try {
+					librarySystem('ola', [])
+					fail();
+				} catch (e) {
+					var isError = true;
+				}
+				eq(isError, true);
+			},
+			'will not register a library if no dependencies are provided': function () {
+				var isError = false;
+				try {
+					librarySystem('ola', 'ola', function () { return 'adeus' })
+					fail();
+				} catch (e) {
+					var isError = true;
+				}
+				eq(isError, true);
+			},
+			'will return undefined if depency does not exist on the library system': function () {
+				eq(librarySystem('adeus'), undefined)
+			},
+			'will be able to register a library ': function () {
+				librarySystem(testLibraryA.name, testLibraryA.dep, testLibraryA.func)
+				eq(librarySystem(testLibraryA.name), 'with testLibraryA')
+			},
+			'will be able to register a library with 1 dependency normally': function () {
+				librarySystem(testLibraryB.name, testLibraryB.dep, testLibraryB.func)
+				eq(librarySystem(testLibraryB.name), 'app compatible with testLibraryA')
+			},
+			'will be able to register a library with multiple dependencies normally': function () {
+				librarySystem(testLibraryC.name, testLibraryC.dep, testLibraryC.func)
+				eq(librarySystem(testLibraryC.name), 'app compatible with testLibraryA and with testLibraryA')
+			},
+			'will be able to get dependencies out of order': function () {
+				librarySystem(testLibraryD.name, testLibraryD.dep, testLibraryD.func)
+				eq(librarySystem(testLibraryD.name), 'app compatible with testLibraryA and with testLibraryA')
+			},
+		});
+
+	</script>
+
+</body>
+
+</html>

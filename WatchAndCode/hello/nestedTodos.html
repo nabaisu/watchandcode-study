@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8" />
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<title>Nested Todos Nabais</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+input{border:none; background: transparent; outline: 0;font-size:24px;width: 100%;} ul { list-style-type: circle; }
+</style>
+</head>
+<body>
+
+<h2>Nested Todos</h2>
+<div id="nested-todos"></div>
+<div>
+	<hr>
+	<h3>how it works</h3>
+	<ul>
+		<li><strong>Create todo</strong>: <kbd>Enter</kbd></li>
+		<li><strong>Edit todo</strong>: just write something on it</li>
+		<li><strong>Navigate between todos</strong>: <kbd>ArrowUp</kbd> and <kbd>ArrowDown</kbd></li>
+		<li><strong>Nest a todo</strong>: <kbd>Tab</kbd></li>
+		<li><strong>UnNest a todo</strong>: <kbd>Shift</kbd> + <kbd>Tab</kbd></li>
+		<li><strong>Toggle a todo</strong>: <kbd>Shift</kbd> + <kbd>Enter</kbd></li>
+		<li><strong>Toggle all todos below</strong>: <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>Enter</kbd></li>
+		<li><strong>Delete a todo</strong>: <kbd>Backspace</kbd> on empty todo</li>
+	</ul>
+</div>
+
+<script
+    src="https://rawcdn.githack.com/nabaisu/jstinytest/28fe26d9a7c0de65b0c8e51b628782987683b751/simpletest.js"></script>
+<script>
+
+(function(){
+	var nestedTodos = {
+		todo: { },
+		todoList: [],
+		createTodo: function(text = '', idTo){
+			var todo = {
+				text: text, 
+				id: this.createUUID(),
+				completed: false, 
+				children: [],
+				parent: idTo || '',
+				shown: true
+			};
+			if (idTo && arguments.length > 1) {
+				var whereTo = this.findTodo(idTo);
+				if(whereTo) {
+					whereTo.children.push(todo);
+				}
+			} else {
+				this.todoList.push(todo);				
+			}
+			return todo.id
+		},
+		createUUID: function(){
+			var dt = new Date().getTime();
+			var uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+				var r = (dt + Math.random()*16)%16 | 0;
+				dt = Math.floor(dt/16);
+				return (c=='x' ? r :(r&0x3|0x8)).toString(16);
+			});
+			return uuid;
+		},
+		editTodo: function(todoId, todoToChange, whereToSearch){
+			var todo = (whereToSearch) ? this.findTodo(todoId, whereToSearch) : this.findTodo(todoId);
+			todo.text = todoToChange;
+		},
+		findTodo: function(todoId, whereToLook){
+			if(!whereToLook) whereToLook = this.todoList;
+			for (let node of whereToLook) {
+			if (node.id === todoId) return node
+			if (node.children) {
+				let desiredNode = this.findTodo(todoId, node.children)
+				if (desiredNode) return desiredNode
+			}
+			}
+			return false
+
+		},
+		deleteTodo: function(todoId){
+			var todo = this.findTodo(todoId);
+			var whereToLook = (!todo.parent) ? this.todoList : this.findTodo(todo.parent).children
+			var indexOfTodo = whereToLook.indexOf(todo);
+			whereToLook.splice(indexOfTodo, 1);
+			if (!this.todoList.length) {
+				this.createTodo();
+			}
+		},
+		toggleTodo: function(todoId){
+			var todo = this.findTodo(todoId);
+			todo.completed = !todo.completed;
+		},
+		toggleAll: function(){
+			var areThereFalse = false;
+			this.todoList.forEach(todo => {
+				if (todo.completed === false){
+					areThereFalse = true;
+				}
+			})
+			this.todoList.forEach(todo => {
+				todo.completed = (areThereFalse)
+			})
+		},
+		nestTodo: function(idToNest){
+			var todo = this.findTodo(idToNest);
+			var whereToLook = (!todo.parent) ? this.todoList : this.findTodo(todo.parent).children
+			var index = whereToLook.indexOf(todo);
+			if (index > 0) {
+				var todoToIdent = whereToLook[index - 1]
+				// in the new one, set the parent of the new one
+				todoToIdent.children.push(todo);
+				todo.parent = todoToIdent.id
+				whereToLook.splice(index, 1);
+			} else {
+				return
+			}
+		},
+		unNestTodo: function(idToUnNest){
+			var todo = this.findTodo(idToUnNest);
+			if(!todo.parent) {return}
+			var parentTodo = this.findTodo(todo.parent);
+			var whereToLook = (!parentTodo.parent) ? this.todoList : this.findTodo(parentTodo.parent).children
+			if (whereToLook === this.todoList) {todo.parent = ""} else { todo.parent = parentTodo.parent }
+			whereToLook.push(todo);
+			var index = parentTodo.children.indexOf(todo);
+			parentTodo.children.splice(index, 1)
+		},
+		toggleAllBelow: function(idToToggle, completedOrNot){
+			var todo = this.findTodo(idToToggle);
+			if (arguments.length < 2) { completedOrNot = !todo.completed }
+			todo.completed = completedOrNot
+			if (todo.children.length) {
+				todo.children.forEach((tod, i) => {
+					tod.completed = completedOrNot
+					if (tod.children.length) {
+						tod.completed = completedOrNot;
+						this.toggleAllBelow(tod.id, completedOrNot)
+					}
+				})
+			}
+		},
+		accessNext: function(firstId) {
+			var todo = this.findTodo(firstId);
+			if (todo.children.length) {
+				return todo.children[0].id;
+			}
+			var parentTodo = this.findTodo(todo.parent);
+			var whereToLook = (!todo.parent) ? this.todoList : parentTodo.children
+			var index = whereToLook.indexOf(todo);
+			if (index === whereToLook.length - 1) {
+				// means he is in the last entry
+				var lastTodoId = this.getIdOfLastWithChildren(whereToLook, todo)
+				if (lastTodoId === true) {
+					return firstId;
+				}
+				return lastTodoId;
+			} else {
+				return whereToLook[index + 1].id;
+			}
+		},
+		getIdOfLastWithChildren: function(whereToLook, todo){
+			var index = whereToLook.indexOf(todo);
+			if (whereToLook === this.todoList) {
+				if (index === whereToLook.length - 1) {
+					// check if it is the last
+					return true
+				} else {
+					return whereToLook[index+1].id
+				}
+			} 
+			if (whereToLook[index + 1]) {
+				return whereToLook[index+1].id;
+			}
+			if (index === whereToLook.length - 1) {
+				var parentTodo = this.findTodo(whereToLook[index].parent)
+				whereToLook = (!parentTodo.parent) ? this.todoList : this.findTodo(parentTodo.parent).children
+				return this.getIdOfLastWithChildren(whereToLook, parentTodo);
+			} 
+		},
+		accessPrevious: function(firstId) {
+			var todo = this.findTodo(firstId);
+			// check if the previous have any children
+			var whereToLook = (!todo.parent) ? this.todoList : this.findTodo(todo.parent).children
+			var index = whereToLook.indexOf(todo);
+			if (index === 0 && todo.parent) {
+				return todo.parent
+			} else if (index > 0 && whereToLook[index-1].id) {
+				return this.getIdOfLastChild(whereToLook[index-1].id)
+			} else {
+				return this.todoList[0].id // first of all
+			}
+		},
+		getIdOfLastChild: function(id){
+			var todo = this.findTodo(id);
+			if (todo.children.length) {
+				return this.getIdOfLastChild(todo.children[todo.children.length - 1].id)
+			} else {
+				return todo.id
+			}
+		},
+	}	
+	window.nestedTodos = nestedTodos;
+})();
+// to make it simpler to call:
+var n = nestedTodos;
+	
+var App = {
+	init: function(){
+		this.todoList = util.store('todos');
+		if (!this.todoList.length) {
+			n.createTodo();
+			// bind both lists
+			this.todoList = n.todoList;
+			util.store('todos', this.todoList);
+		} else {
+			// if empty bind existing with target
+			n.todoList = this.todoList;
+		}
+		this.displayTodos();	
+		this.bindEvents();			
+	},
+	bindEvents: function(){
+		var self = this;
+		document.body.addEventListener("keydown", function (event) { 
+				if (event.key === "Tab" || event.key === "ArrowDown" || event.key === "ArrowUp" || event.key === "Enter") {
+					event.preventDefault();
+				} else if ( !event.target.value.length && event.key === "Backspace" ) {
+					if (event.target.classList.contains("todo")) {
+						if (!event.target.value.length) {
+							var prevId = n.accessPrevious(event.target.id);	
+							var deleteDirectly = n.findTodo(event.target.id).children.length;
+							if (deleteDirectly) {								
+								if (!confirm('this todo has many childs, do you want to delete them all ?')) {
+									return;
+								}
+							}
+							n.deleteTodo(event.target.id);
+							self.displayTodos();
+							try {
+								self.focusOn(prevId);
+							} catch(e){
+								self.focusOn(n.todoList[0].id);
+							}
+							event.preventDefault();
+						}
+					}
+				}
+		});
+		document.body.addEventListener("keyup", function (event) {
+			if (event.key === "ArrowDown" && !event.shiftKey) {
+				if (event.target.classList.contains("todo")) {
+					var nextId = n.accessNext(event.target.id);
+					self.focusOn(nextId)
+				}	
+			} else if (event.key === "ArrowUp" && !event.shiftKey) {
+				if (event.target.classList.contains("todo")) {
+					self.focusOn(n.accessPrevious(event.target.id))
+				}	
+			} else if (event.key === "Tab" && !event.shiftKey) {
+				event.preventDefault();
+				if (event.target.classList.contains("todo")) {
+					n.nestTodo(event.target.id);
+					self.displayTodos();
+					self.focusOn(event.target.id);
+				}	
+			} else if (event.key === "Tab" && event.shiftKey) {
+				event.preventDefault();
+				if (event.target.classList.contains("todo")) {
+					n.unNestTodo(event.target.id);
+					self.displayTodos();
+					self.focusOn(event.target.id);
+				}	
+			} else if (event.key === "Enter" && !event.shiftKey) {
+				if (event.target.classList.contains("todo")) {
+					var newId = n.createTodo('',event.target.parent);
+					self.displayTodos();
+					self.focusOn(newId);
+				}
+			} else if (event.key === "Enter" && event.shiftKey && !event.ctrlKey) {
+				if (event.target.classList.contains("todo")) {
+					n.toggleTodo(event.target.id);
+					self.displayTodos();
+					self.focusOn(event.target.id);						
+				}	
+			} else if (event.key === "Enter" && event.shiftKey && event.ctrlKey) {
+				if (event.target.classList.contains("todo")) {
+					n.toggleAllBelow(event.target.id);
+					self.displayTodos();
+					self.focusOn(event.target.id);						
+				}	
+			} 
+		});
+		window.onload = function() {
+			document.getElementById(self.todoList[0].id).focus();
+		}
+	},
+	focusOn: function(id){
+		document.getElementById(id).focus();
+	},
+	editTodo: function(id, value){
+		n.editTodo(id, value);
+		this.displayTodos();
+		this.focusOn(id);
+	},
+	displayTodos: function() {
+		//this.todoList = n.todoList;
+		this.renderTodos(this.todoList);
+		util.store('todos', this.todoList);
+	},
+	renderTodos: function(toRender, where){
+		if (arguments.length === 1 && !where) {
+			where = document.getElementById('nested-todos');
+			where.innerHTML = '';
+		}
+
+		var todoUl = document.createElement('ul')
+		toRender.forEach((todo, i) => {
+			var eachTodoLi = document.createElement('li')
+			var eachTodo = document.createElement('input');
+			eachTodo.classList.add('todo')
+			eachTodo.type = 'text'
+			eachTodo.oninput = function() {
+				App.editTodo(this.id, this.value); 
+			}
+			if (todo.completed) {
+				eachTodo.style = 'text-decoration: line-through;';
+			}
+			eachTodo.value = `${todo.text}`
+			eachTodo.id = todo.id
+			eachTodo.parent = todo.parent
+			todoUl.appendChild(eachTodoLi);
+			eachTodoLi.appendChild(eachTodo);
+			if (todo.children.length) {
+				this.renderTodos(todo.children, todoUl)
+			}
+		})
+		where.appendChild(todoUl);
+	},
+
+}
+
+var util = {
+	store: function (namespace, data) {
+			if (arguments.length > 1) {
+				return localStorage.setItem(namespace, JSON.stringify(data));
+			} else {
+				var store = localStorage.getItem(namespace);
+				return (store && JSON.parse(store)) || [];
+			}
+	},
+};
+
+tests({
+	'nestedTodos are accessible as a library': function () {
+		n.a = 'a'
+		eq(n.a, 'a');
+	},
+	'is possible to create a new todo': function () {
+		n.createTodo('hello');
+		eq(n.todoList[0].text, 'hello');
+		eq(Boolean(n.todoList[0].id), true);
+		eq(n.todoList[0].completed, false);
+	},
+	'each todo is created uncompleted': function () {
+		n.todoList = [];
+		n.createTodo('hello');
+		eq(n.todoList[0].completed, false);
+	},
+	'the ids will be assigned differently with different creations': function () {
+		n.todoList = [];
+		n.createTodo('hello');
+		n.createTodo('goodbye');
+		eq(n.todoList[0].id !== n.todoList[1].id, true);
+		eq(n.todoList.length, 2);
+	},
+	'will be able to edit a todo': function () {
+		n.todoList = [];
+		n.createTodo('hello');
+		var firstId = n.todoList[0].id
+		n.editTodo(firstId, 'text')
+		eq(n.todoList[0].text, 'text');
+	},
+	'will be able to delete a todo': function () {
+		n.todoList = [];
+		n.createTodo('hello');
+		n.createTodo('bye');
+		var firstId = n.todoList[0].id
+		n.deleteTodo(firstId)
+		eq(n.todoList[0].text, 'bye');
+	},        
+	'will be able to complete a todo': function () {
+		n.todoList = [];
+		n.createTodo('hello');
+		n.createTodo('bye');
+		var firstId = n.todoList[0].id
+		n.toggleTodo(firstId)
+		eq(n.todoList[0].completed, true);
+		eq(n.todoList[1].completed, false);
+	},
+	'will be able to complete all todos': function () {
+		n.todoList = [];
+		n.createTodo('hello');
+		n.createTodo('bye');
+		var firstId = n.todoList[0].id
+		n.toggleTodo(firstId)
+		n.toggleAll()
+		eq(n.todoList[0].completed, true);
+		eq(n.todoList[1].completed, true);
+	},
+	'will be able to uncomplete all todos': function () {
+		n.todoList = [];
+		n.createTodo('hello');
+		n.createTodo('bye');
+		n.createTodo('adios');
+		var secondId = n.todoList[1].id
+		n.toggleTodo(secondId)
+		n.toggleAll()
+		n.toggleAll()
+		eq(n.todoList[0].completed, false);
+		eq(n.todoList[1].completed, false);
+		eq(n.todoList[2].completed, false);
+	},
+	'will be able to nest a todo': function () {
+		n.todoList = [];
+		n.createTodo('hello');
+		n.createTodo( 'text', n.todoList[0].id)
+		eq(n.todoList[0].children[0].text, 'text')
+	},		
+	'will be able to create a nest inside another nested todo:': function () {
+		n.todoList = [];
+		n.createTodo('hello');
+			n.createTodo('text', n.todoList[0].id )
+				n.createTodo('ola', n.todoList[0].children[0].id)
+				n.createTodo('adeus', n.todoList[0].children[0].id)
+		eq(n.todoList[0].children[0].children[0].text, 'ola')
+		eq(n.todoList[0].children[0].children[1].text, 'adeus')
+	},
+	'will be able to nest a todo that was not nested:': function(){
+		n.todoList = [];
+		n.createTodo('1st')
+		n.createTodo('2nd')
+			n.createTodo('1bom dia', n.todoList[1].id)
+			n.createTodo('2bom dias', n.todoList[1].id)
+		n.nestTodo(n.todoList[1].id)
+		eq(n.todoList[0].children.length, 1)
+		eq(n.todoList[0].children[0].children.length, 2)
+		eq(n.todoList.length, 1)
+		eq(n.todoList[0].children[0].parent, n.todoList[0].id)
+	},
+	'will be able to nest a nested todo with all of its children:': function(){
+		n.todoList = [];
+		n.createTodo('1st')
+		n.createTodo('2nd')
+			n.createTodo('1bom dia', n.todoList[1].id)
+				n.createTodo('1adeus', n.todoList[1].children[0].id)
+			n.createTodo('2bom dias', n.todoList[1].id)
+				n.createTodo('2adeus', n.todoList[1].children[1].id)
+				n.nestTodo(n.todoList[1].children[1].id)
+		eq(n.todoList.length, 2)
+		eq(n.todoList[1].children.length, 1)
+		eq(n.todoList[1].children[0].children.length, 2)
+	},
+	'will be able to unnest a todo from the top:': function(){
+		n.todoList = [];
+		n.createTodo('1st')
+		n.createTodo('2nd')
+			n.createTodo('1bom dia', n.todoList[1].id)
+				n.createTodo('1adeus', n.todoList[1].children[0].id)
+			n.createTodo('2bom dias', n.todoList[1].id)
+				n.createTodo('2adeus', n.todoList[1].children[1].id)
+		n.unNestTodo(n.todoList[1].children[1].id)
+		eq(n.todoList.length, 3)
+		eq(n.todoList[1].children.length, 1)
+		eq(n.todoList[2].children.length, 1)
+		eq(n.todoList[2].parent, '')
+	},
+	'will be able to unnest a todo to another todo:': function(){
+		n.todoList = [];
+		n.createTodo('1st')
+		n.createTodo('2nd')
+			n.createTodo('1bom dia', n.todoList[1].id)
+				n.createTodo('1adeus', n.todoList[1].children[0].id)
+			n.createTodo('2bom dias', n.todoList[1].id)
+				n.createTodo('2adeus', n.todoList[1].children[1].id)
+				n.createTodo('3adeus', n.todoList[1].children[1].id)
+
+		n.unNestTodo(n.todoList[1].children[1].children[1].id)
+		eq(n.todoList.length, 2)
+		eq(n.todoList[1].children.length, 3)
+	},
+	'will be able to toggle the todos below:': function(){
+		n.todoList = [];
+		n.createTodo('11')
+		n.createTodo('12')
+			n.createTodo('21', n.todoList[1].id)
+				n.createTodo('31', n.todoList[1].children[0].id)
+			n.createTodo('22', n.todoList[1].id)
+				n.createTodo('32', n.todoList[1].children[1].id)
+				n.createTodo('33', n.todoList[1].children[1].id)
+		n.toggleAllBelow(n.todoList[1].id)
+		eq(n.todoList[0].completed, false)
+		eq(n.todoList[1].children[1].children[0].completed, true)
+		eq(n.todoList[1].children[1].children[1].completed, true)
+		n.toggleAllBelow(n.todoList[1].id)
+		eq(n.todoList[0].completed, false)
+		eq(n.todoList[1].children[1].children[0].completed, false)
+		eq(n.todoList[1].children[1].children[1].completed, false)
+	},
+	'access next todo simple down 1st level:': function(){
+		n.todoList = [];
+		n.createTodo('11')
+		n.createTodo('12')
+
+		var nextId = n.accessNext(n.todoList[0].id)
+		eq(nextId, n.todoList[1].id)
+		nextId = n.accessNext(nextId);
+		eq(nextId, n.todoList[1].id)	
+	},
+	'access next todo simple nested first item 2nd level:': function(){
+		n.todoList = [];
+		n.createTodo('11')
+		n.createTodo('12')
+			n.createTodo('121', n.todoList[1].id)
+
+		var nextId = n.accessNext(n.todoList[0].id)
+		eq(nextId, n.todoList[1].id)
+		nextId = n.accessNext(nextId);
+		eq(nextId, n.todoList[1].children[0].id)	
+		nextId = n.accessNext(nextId);
+		eq(nextId, n.todoList[1].children[0].id)	
+	},
+	'access next todo simple unnest item 3rd level:': function(){
+		n.todoList = [];
+		n.createTodo('11')
+			n.createTodo('111', n.todoList[0].id)
+		n.createTodo('12')
+
+		var nextId = n.accessNext(n.todoList[0].id)
+		eq(nextId, n.todoList[0].children[0].id)	
+		nextId = n.accessNext(nextId);
+		eq(nextId, n.todoList[1].id)
+		nextId = n.accessNext(nextId);
+		eq(nextId, n.todoList[1].id)
+	},
+	'access next todo nested multiple item 4th level:': function(){
+		n.todoList = [];
+		n.createTodo('11')
+			n.createTodo('111', n.todoList[0].id)
+				n.createTodo('1111', n.todoList[0].children[0].id)
+		n.createTodo('12')
+
+		var nextId = n.accessNext(n.todoList[0].id)
+		eq(nextId, n.todoList[0].children[0].id)	
+		nextId = n.accessNext(nextId);
+		eq(nextId, n.todoList[0].children[0].children[0].id)
+		nextId = n.accessNext(nextId);
+		eq(nextId, n.todoList[1].id)
+	},
+	'access next todo nested multiple item 5th level:': function(){
+		n.todoList = [];
+		n.createTodo('11')
+			n.createTodo('111', n.todoList[0].id)
+				n.createTodo('1111', n.todoList[0].children[0].id)
+					n.createTodo('11111', n.todoList[0].children[0].children[0].id)
+						n.createTodo('111111', n.todoList[0].children[0].children[0].children[0].id)
+							n.createTodo('1111111', n.todoList[0].children[0].children[0].children[0].children[0].id)
+							n.createTodo('1111112', n.todoList[0].children[0].children[0].children[0].children[0].id)
+							n.createTodo('1111113', n.todoList[0].children[0].children[0].children[0].children[0].id)
+			n.createTodo('112', n.todoList[0].id)
+		n.createTodo('12')
+
+		var nextId = n.accessNext(n.todoList[0].id)
+		eq(nextId, n.todoList[0].children[0].id)	
+		nextId = n.accessNext(nextId);
+		eq(nextId, n.todoList[0].children[0].children[0].id)
+		nextId = n.accessNext(nextId);
+		eq(nextId, n.todoList[0].children[0].children[0].children[0].id)
+		nextId = n.accessNext(nextId);
+		eq(nextId, n.todoList[0].children[0].children[0].children[0].children[0].id)
+		nextId = n.accessNext(nextId);
+		eq(nextId, n.todoList[0].children[0].children[0].children[0].children[0].children[0].id)
+		nextId = n.accessNext(nextId);
+		eq(nextId, n.todoList[0].children[0].children[0].children[0].children[0].children[1].id)
+		nextId = n.accessNext(nextId);
+		eq(nextId, n.todoList[0].children[0].children[0].children[0].children[0].children[2].id)
+		nextId = n.accessNext(nextId);
+		eq(nextId, n.todoList[0].children[1].id)
+		nextId = n.accessNext(nextId);
+		eq(nextId, n.todoList[1].id)
+	},
+	'access next todo total:': function(){
+		n.todoList = [];
+		n.createTodo('11')
+		n.createTodo('12')
+			n.createTodo('121', n.todoList[1].id)
+				n.createTodo('1211', n.todoList[1].children[0].id)
+				n.createTodo('1212', n.todoList[1].children[0].id)
+					n.createTodo('12121', n.todoList[1].children[0].children[1].id)
+		n.createTodo('13')
+			n.createTodo('131', n.todoList[2].id)
+		
+		var nextId = n.accessNext(n.todoList[0].id)
+		eq(nextId, n.todoList[1].id)
+		nextId = n.accessNext(nextId);
+		eq(nextId, n.todoList[1].children[0].id)	
+		nextId = n.accessNext(nextId);
+		eq(nextId, n.todoList[1].children[0].children[0].id)	
+		nextId = n.accessNext(nextId);
+		eq(nextId, n.todoList[1].children[0].children[1].id)	
+		nextId = n.accessNext(nextId);
+		eq(nextId, n.todoList[1].children[0].children[1].children[0].id)	
+		nextId = n.accessNext(nextId);
+		eq(nextId, n.todoList[2].id)	
+		nextId = n.accessNext(nextId);
+		eq(nextId, n.todoList[2].children[0].id)	
+	},
+	'will get the id of the last children:': function(){
+		n.todoList = [];
+		n.createTodo('1st')
+		n.createTodo('2nd')
+			n.createTodo('1bom dia', n.todoList[1].id)
+				n.createTodo('1adeus', n.todoList[1].children[0].id)
+			n.createTodo('2bom dias', n.todoList[1].id)
+				n.createTodo('2adeus', n.todoList[1].children[1].id)
+				n.createTodo('3adeus', n.todoList[1].children[1].id)
+		var targetId = n.getIdOfLastChild(n.todoList[1].id)
+		eq(targetId, n.todoList[1].children[1].children[1].id)
+	},
+	'access previous in middle': function(){
+		n.todoList = [];
+		n.createTodo('1st')
+		n.createTodo('2nd')
+			n.createTodo('1bom dia', n.todoList[1].id)
+				n.createTodo('1adeus', n.todoList[1].children[0].id)
+			n.createTodo('2bom dias', n.todoList[1].id)
+				n.createTodo('2adeus', n.todoList[1].children[1].id)
+				n.createTodo('3adeus', n.todoList[1].children[1].id)
+	
+		var nextId = n.accessPrevious(n.todoList[1].children[1].children[1].id);
+		eq(nextId, n.todoList[1].children[1].children[0].id)
+		nextId = n.accessPrevious(nextId)
+		eq(nextId, n.todoList[1].children[1].id)
+		nextId = n.accessPrevious(nextId);
+		eq(nextId, n.todoList[1].children[0].children[0].id)	
+		n.todoList = [];
+	}
+	
+});
+
+	
+App.init();
+
+
+</script>
+
+</body>
+</html>

@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8" />
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<title>beasts Nabais</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body>
+
+<script
+    src="https://rawcdn.githack.com/nabaisu/jstinytest/28fe26d9a7c0de65b0c8e51b628782987683b751/simpletest.js"></script>
+<script>
+
+function isPrototypeOf(prototypeObj, object) {
+  if (prototypeObj === undefined || prototypeObj === null || object === null) {
+    // this should throw TypeError
+    throw new TypeError("the prototype Object can't be null nor empty");
+  }
+  if (
+    prototypeObj === Object.prototype
+    && object.constructor.name === 'Object'
+  ) {
+    return true;
+  }
+
+   if (Object.getPrototypeOf(object) === null) {
+    //base case
+    return false;
+   }
+  //recursive case
+    if (Object.getPrototypeOf(object) !== prototypeObj) {
+      return isPrototypeOf(prototypeObj,Object.getPrototypeOf(object));
+    } else {
+      return true;
+    }
+ }
+
+
+const canine = {
+  bark() {
+    console.log('bark');
+  },
+};
+
+const dog = Object.create(canine);
+dog.fetch = function () {
+  console.log('fetch');
+};
+
+const myDog = Object.create(dog);
+const empty = Object.create(null);
+
+tests({
+	'dog is prototype of myDog': function () {
+		eq(isPrototypeOf(dog, myDog), true);
+		eq(isPrototypeOf(myDog, dog), false);
+	},
+	'canine is prototype of dog': function () {
+		eq(isPrototypeOf(canine, dog), true);
+		eq(isPrototypeOf(dog, canine), false);
+	},
+	'canine is prototype of myDog': function () {
+		eq(isPrototypeOf(canine, myDog), true);
+		eq(isPrototypeOf(myDog, canine), false);
+	},
+	'all are prototype of Object': function () {
+		eq(isPrototypeOf(Object.prototype, myDog), true);
+		eq(isPrototypeOf(Object.prototype, dog), true);
+		eq(isPrototypeOf(Object.prototype, canine), true);
+	},
+});
+
+</script>
+
+</body>
+</html>

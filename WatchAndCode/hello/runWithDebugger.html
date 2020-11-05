@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta charset="utf-8" />
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<title>beasts Nabais</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+
+<body>
+
+	<script
+		src="https://rawcdn.githack.com/nabaisu/jstinytest/28fe26d9a7c0de65b0c8e51b628782987683b751/simpletest.js"></script>
+	<script>
+
+		function runWithDebuggerES5(callback, arrayOfArgs) {
+			if (!(callback && {}.toString.call(callback) === '[object Function]')) {
+				throw 'first argument must be a function'
+			}
+			if (arguments.length < 2) {
+				debugger;
+				callback();
+			}
+			if (!Array.isArray(arrayOfArgs)) {
+				debugger;
+				callback(arrayOfArgs);
+			} else {
+				debugger;
+				callback.apply(null, arrayOfArgs);
+			}
+		};
+
+		function runWithDebuggerES6(callback, arrayOfArgs) {
+			if (!(callback && {}.toString.call(callback) === '[object Function]')) {
+				throw 'first argument must be a function'
+			}
+			if (arguments.length < 2) {
+				debugger;
+				callback();
+			}
+			if (!Array.isArray(arrayOfArgs)) {
+				debugger;
+				callback(arrayOfArgs);
+			}else {
+				debugger;
+				callback(...arrayOfArgs);
+			}
+		}
+
+		window.hello;
+		function testFnSayHi() {
+			window.hello = 'hi';
+		}
+
+		function testFnSayHiTo(name) {
+			window.hello = `hi ${name}`;
+		}
+
+		function testFnSayHiFullName(first, last) {
+			window.hello = `${first} ${last}`;
+		}
+
+		[runWithDebuggerES5, runWithDebuggerES6].forEach(function (runWithDebugger) {
+			tests({
+				'will not work if sent empty': function () {
+					var isError = false;
+					try {
+						runWithDebugger();
+						fail();
+					} catch (e) {
+						var isError = true;
+					}
+					eq(isError, true);
+				},
+				'will not work if the first argument is not a function': function () {
+					var callback = "a"
+					var isError = false;
+					try {
+						runWithDebugger(callback);
+						fail();
+					} catch (e) {
+						var isError = true;
+					}
+					eq(isError, true);
+				},
+				'will call the function if only 1 argument (callback)': function () {
+					runWithDebugger(testFnSayHi)
+					eq(window.hello, 'hi');
+				},
+				'will call the function if 2 arguments (callback and argument)': function () {
+					runWithDebugger(testFnSayHiTo, 'joao')
+					eq(window.hello, 'hi joao');
+				},
+				'will call the function if only 1 argument (callback and array of arguments)': function () {
+					runWithDebugger(testFnSayHiFullName, ['joao', 'nabais'])
+					eq(window.hello, 'joao nabais');
+				},
+			});
+		})
+
+	</script>
+
+</body>
+
+</html>
