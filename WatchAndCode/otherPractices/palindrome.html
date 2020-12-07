@@ -1,0 +1,70 @@
+<script src="https://rawcdn.githack.com/nabaisu/jstinytest/28fe26d9a7c0de65b0c8e51b628782987683b751/simpletest.js"></script>
+<script>
+
+function findPalindromes(string){
+    var final = [];
+    string = String(string);
+    var depth = string.length;
+    for (let depthIndex = 0; index < depth; depthIndex++) {
+                
+    }
+
+    /*
+
+    loop through the depths
+    the first depth is 0 (add zero)
+    return each string and a space, and then when got to the end, then add to the final one
+    if there is a palindrome there, then add to the final, otherwise, don't
+    check with a bigger depth (1) (add 1 to the first one)
+
+    */
+
+
+
+    // check biggest palindrome
+    if (checkIfPalindrome(string)){
+
+    } else {
+
+    }
+
+    // recursive case
+    if (arguments.length > 1) {
+        
+    } else {
+        final.push(string);
+    }
+    //final case
+    return final
+}
+
+function checkIfPalindrome(string){
+    
+    return false
+}
+
+tests({
+  'if empty, return an empty array empty': function () {
+    jeq(findPalindromes(""), [""]);
+  },
+  'if not a string, return as string': function () {
+    jeq(findPalindromes(1), ["1"]);
+  },
+  'will return the word with a space if not palindrome': function () {
+    jeq(findPalindromes("ab"), ["a b"]);
+  },
+  'will join if the word is a palindrome': function () {
+    jeq(findPalindromes("aa"), ["a a","aa"]);
+  },
+  'will return a palindrome if we can read both ways': function () {
+    jeq(findPalindromes("aia"), ["a i a","aia"]);
+  },
+  'will join 2 words if we can see it to the front and back': function () {
+    jeq(findPalindromes("aiia"), ["a i i a","a ii a","aiia"]);
+  },
+  'will join the palindromes and separate the others': function () {
+    jeq(findPalindromes("joao"), ["j o a o","j oao"]);
+  },
+});
+
+</script>
